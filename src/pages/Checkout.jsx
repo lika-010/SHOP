@@ -1,15 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-  Truck,
-  MapPin,
-  Search,
-  HelpCircle,
-} from "lucide-react";
+import { Search, Truck, CreditCard } from "lucide-react";
 
 export default function Checkout() {
   const [cartItems, setCartItems] = useState([]);
 
-  // 🧠 form state (IMPORTANT)
   const [form, setForm] = useState({
     email: "",
     firstName: "",
@@ -18,14 +12,26 @@ export default function Checkout() {
     phone: "",
   });
 
-  // 🔄 load cart
-  const loadCart = () => {
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    setCartItems(cart);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+
+  const [cardInfo, setCardInfo] = useState({
+    cardNumber: "",
+    cardHolder: "",
+    expiry: "",
+    cvv: "",
+  });
+
+  const safeParse = (key, fallback) => {
+    try {
+      return JSON.parse(localStorage.getItem(key)) ?? fallback;
+    } catch {
+      return fallback;
+    }
   };
 
   useEffect(() => {
-    loadCart();
+    const cart = safeParse("cart", []);
+    setCartItems(cart);
   }, []);
 
   const subtotal = cartItems.reduce(
@@ -37,7 +43,6 @@ export default function Checkout() {
   const tax = 0;
   const total = subtotal + shipping + tax;
 
-  // 🧾 submit order
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -51,24 +56,72 @@ export default function Checkout() {
       return;
     }
 
+    if (paymentMethod === "card") {
+      if (
+        !cardInfo.cardNumber ||
+        !cardInfo.cardHolder ||
+        !cardInfo.expiry ||
+        !cardInfo.cvv
+      ) {
+        alert("Please complete card information");
+        return;
+      }
+    }
+
     const order = {
       id: Date.now(),
       customer: form,
       items: cartItems,
       total,
+      status: "pending",
+      paymentMethod,
+      paymentStatus:
+        paymentMethod === "card" ? "paid" : "pending",
+
+      cardInfo:
+        paymentMethod === "card"
+          ? {
+              cardNumber:
+                "**** **** **** " +
+                cardInfo.cardNumber.slice(-4),
+              cardHolder: cardInfo.cardHolder,
+            }
+          : null,
+
       date: new Date().toISOString(),
     };
 
-    const orders = JSON.parse(localStorage.getItem("orders")) || [];
-    orders.push(order);
+    const orders = safeParse("orders", []);
 
-    localStorage.setItem("orders", JSON.stringify(orders));
+    localStorage.setItem(
+      "orders",
+      JSON.stringify([...orders, order])
+    );
 
-    // clear cart
     localStorage.removeItem("cart");
+
     setCartItems([]);
 
-    alert("Order placed successfully!");
+    setForm({
+      email: "",
+      firstName: "",
+      lastName: "",
+      address: "",
+      phone: "",
+    });
+
+    setCardInfo({
+      cardNumber: "",
+      cardHolder: "",
+      expiry: "",
+      cvv: "",
+    });
+
+    alert(
+      paymentMethod === "card"
+        ? "Payment successful! Order placed."
+        : "Order placed successfully!"
+    );
   };
 
   return (
@@ -81,22 +134,23 @@ export default function Checkout() {
 
         {/* LEFT */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl">
-
           <h2 className="text-3xl font-semibold mb-8">
-            Delivery Options
+            Delivery Information
           </h2>
 
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
 
             <input
               type="email"
               placeholder="Email*"
               value={form.email}
               onChange={(e) =>
-                setForm({ ...form, email: e.target.value })
+                setForm({
+                  ...form,
+                  email: e.target.value,
+                })
               }
-              className="w-full border rounded-xl px-5 py-5 text-xl"
+              className="w-full border rounded-xl px-5 py-4"
             />
 
             <div className="grid md:grid-cols-2 gap-5">
@@ -105,9 +159,12 @@ export default function Checkout() {
                 placeholder="First Name*"
                 value={form.firstName}
                 onChange={(e) =>
-                  setForm({ ...form, firstName: e.target.value })
+                  setForm({
+                    ...form,
+                    firstName: e.target.value,
+                  })
                 }
-                className="border rounded-xl px-5 py-5 text-xl"
+                className="border rounded-xl px-5 py-4"
               />
 
               <input
@@ -115,16 +172,19 @@ export default function Checkout() {
                 placeholder="Last Name"
                 value={form.lastName}
                 onChange={(e) =>
-                  setForm({ ...form, lastName: e.target.value })
+                  setForm({
+                    ...form,
+                    lastName: e.target.value,
+                  })
                 }
-                className="border rounded-xl px-5 py-5 text-xl"
+                className="border rounded-xl px-5 py-4"
               />
             </div>
 
             <div className="relative">
               <Search
+                size={20}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-                size={22}
               />
 
               <input
@@ -132,9 +192,12 @@ export default function Checkout() {
                 placeholder="Address*"
                 value={form.address}
                 onChange={(e) =>
-                  setForm({ ...form, address: e.target.value })
+                  setForm({
+                    ...form,
+                    address: e.target.value,
+                  })
                 }
-                className="w-full border rounded-xl pl-14 py-5 text-xl"
+                className="w-full border rounded-xl pl-12 py-4"
               />
             </div>
 
@@ -143,17 +206,123 @@ export default function Checkout() {
               placeholder="Phone Number"
               value={form.phone}
               onChange={(e) =>
-                setForm({ ...form, phone: e.target.value })
+                setForm({
+                  ...form,
+                  phone: e.target.value,
+                })
               }
-              className="w-full md:w-1/2 border rounded-xl px-5 py-5 text-xl"
+              className="w-full border rounded-xl px-5 py-4"
             />
+
+            {/* PAYMENT */}
+            <div>
+              <h3 className="text-2xl font-semibold mb-4">
+                Payment Method
+              </h3>
+
+              <div className="flex flex-wrap gap-4 mb-6">
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cod")}
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl border ${
+                    paymentMethod === "cod"
+                      ? "bg-black text-white"
+                      : "bg-white"
+                  }`}
+                >
+                  <Truck size={18} />
+                  Cash On Delivery
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("card")}
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl border ${
+                    paymentMethod === "card"
+                      ? "bg-black text-white"
+                      : "bg-white"
+                  }`}
+                >
+                  <CreditCard size={18} />
+                  Credit / Debit Card
+                </button>
+
+              </div>
+
+              {/* CARD FORM */}
+              {paymentMethod === "card" && (
+                <div className="bg-gray-50 border rounded-2xl p-5 space-y-4">
+
+                  <input
+                    type="text"
+                    placeholder="Card Number"
+                    maxLength={16}
+                    value={cardInfo.cardNumber}
+                    onChange={(e) =>
+                      setCardInfo({
+                        ...cardInfo,
+                        cardNumber: e.target.value,
+                      })
+                    }
+                    className="w-full border rounded-xl p-3"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Card Holder Name"
+                    value={cardInfo.cardHolder}
+                    onChange={(e) =>
+                      setCardInfo({
+                        ...cardInfo,
+                        cardHolder: e.target.value,
+                      })
+                    }
+                    className="w-full border rounded-xl p-3"
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+
+                    <input
+                      type="text"
+                      placeholder="MM/YY"
+                      value={cardInfo.expiry}
+                      onChange={(e) =>
+                        setCardInfo({
+                          ...cardInfo,
+                          expiry: e.target.value,
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                    <input
+                      type="password"
+                      placeholder="CVV"
+                      maxLength={4}
+                      value={cardInfo.cvv}
+                      onChange={(e) =>
+                        setCardInfo({
+                          ...cardInfo,
+                          cvv: e.target.value,
+                        })
+                      }
+                      className="border rounded-xl p-3"
+                    />
+
+                  </div>
+
+                </div>
+              )}
+            </div>
 
             <button
               type="submit"
-              className="bg-black text-white px-12 py-5 rounded-full text-xl font-semibold"
+              className="bg-black text-white px-10 py-4 rounded-full font-semibold hover:bg-gray-800 transition"
             >
               Place Order
             </button>
+
           </form>
         </div>
 
@@ -161,11 +330,10 @@ export default function Checkout() {
         <div className="bg-white p-8 rounded-2xl h-fit">
 
           <h2 className="text-3xl font-semibold mb-8">
-            In Your Bag ({cartItems.length})
+            Order Summary
           </h2>
 
-          {/* SUMMARY */}
-          <div className="space-y-4 text-xl">
+          <div className="space-y-4">
 
             <div className="flex justify-between">
               <span>Subtotal</span>
@@ -177,39 +345,51 @@ export default function Checkout() {
               <span>${shipping.toFixed(2)}</span>
             </div>
 
-            <div className="border-t pt-5 flex justify-between text-2xl font-semibold">
+            <div className="border-t pt-4 flex justify-between text-xl font-bold">
               <span>Total</span>
               <span>${total.toFixed(2)}</span>
             </div>
+
           </div>
 
-          {/* ITEMS */}
-          <div className="border-t mt-10 pt-8 space-y-6">
+          <div className="border-t mt-8 pt-6 space-y-4">
+
             {cartItems.length === 0 ? (
               <p className="text-center text-gray-500">
                 Your cart is empty
               </p>
             ) : (
               cartItems.map((item) => (
-                <div key={item.id} className="flex gap-5">
+                <div
+                  key={item.id}
+                  className="flex gap-4"
+                >
                   <img
                     src={item.image}
-                    className="w-28 h-28 object-cover rounded-lg"
+                    alt={item.name}
+                    className="w-20 h-20 rounded-lg object-cover"
                   />
 
                   <div>
-                    <h4 className="text-xl font-semibold">
-                      ${item.price * item.quantity}
+                    <h4 className="font-semibold">
+                      {item.name}
                     </h4>
 
-                    <p>{item.name}</p>
-                    <p className="text-gray-600">
+                    <p className="text-gray-500">
                       Qty: {item.quantity}
+                    </p>
+
+                    <p className="font-bold">
+                      $
+                      {(
+                        item.price * item.quantity
+                      ).toFixed(2)}
                     </p>
                   </div>
                 </div>
               ))
             )}
+
           </div>
 
         </div>

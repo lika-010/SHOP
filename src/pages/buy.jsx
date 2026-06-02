@@ -1,16 +1,33 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   Truck,
   MapPin,
   Search,
   HelpCircle,
+  CreditCard,
 } from "lucide-react";
 
 export default function Buy() {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const product = location.state;
 
-  // 🛑 If no product (page refresh protection)
+  const [form, setForm] = useState({
+    address: "",
+    phone: "",
+  });
+
+  const [paymentMethod, setPaymentMethod] = useState("cod");
+
+  const [cardInfo, setCardInfo] = useState({
+    cardNumber: "",
+    cardHolder: "",
+    expiry: "",
+    cvv: "",
+  });
+
   if (!product) {
     return (
       <div className="text-center py-20 text-2xl font-semibold">
@@ -19,57 +36,131 @@ export default function Buy() {
     );
   }
 
-  // 💰 Calculations
   const subtotal = product.price * (product.quantity || 1);
   const shipping = 8;
   const total = subtotal + shipping;
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!form.address || !form.phone) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    if (paymentMethod === "card") {
+      if (
+        !cardInfo.cardNumber ||
+        !cardInfo.cardHolder ||
+        !cardInfo.expiry ||
+        !cardInfo.cvv
+      ) {
+        alert("Please complete card information");
+        return;
+      }
+    }
+
+    const order = {
+      id: Date.now(),
+
+      items: [
+        {
+          ...product,
+          quantity: product.quantity || 1,
+        },
+      ],
+
+      total,
+      status: "pending",
+
+      customer: {
+        address: form.address,
+        phone: form.phone,
+      },
+
+      paymentMethod,
+
+      paymentStatus:
+        paymentMethod === "card"
+          ? "paid"
+          : "pending",
+
+      cardInfo:
+        paymentMethod === "card"
+          ? {
+              cardNumber:
+                "**** **** **** " +
+                cardInfo.cardNumber.slice(-4),
+              cardHolder: cardInfo.cardHolder,
+            }
+          : null,
+
+      date: new Date().toISOString(),
+    };
+
+    const orders =
+      JSON.parse(localStorage.getItem("orders")) || [];
+
+    orders.push(order);
+
+    localStorage.setItem(
+      "orders",
+      JSON.stringify(orders)
+    );
+
+    alert(
+      paymentMethod === "card"
+        ? "Payment successful!"
+        : "Order placed successfully!"
+    );
+
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] py-10 px-5">
       <h1 className="text-4xl font-semibold text-center mb-12">
-        Buy
+        Buy Now
       </h1>
 
       <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-10">
 
-        {/* LEFT SIDE */}
+        {/* LEFT */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm">
 
-          {/* Delivery */}
           <h2 className="text-3xl font-semibold mb-8">
-            Delivery Options
+            Delivery Information
           </h2>
 
           <div className="grid grid-cols-2 gap-5 mb-8">
 
-            <button className="border-2 border-black rounded-xl py-6 flex items-center justify-center gap-3 text-xl font-medium hover:bg-gray-100 transition">
+            <button
+              type="button"
+              className="border-2 border-black rounded-xl py-6 flex items-center justify-center gap-3 text-xl font-medium"
+            >
               <Truck size={28} />
               Ship
             </button>
 
-            <button className="border rounded-xl py-6 flex items-center justify-center gap-3 text-xl font-medium hover:bg-gray-100 transition">
+            <button
+              type="button"
+              className="border rounded-xl py-6 flex items-center justify-center gap-3 text-xl font-medium"
+            >
               <MapPin size={28} />
               Pick Up
             </button>
+
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-3 mb-10">
-            <button className="px-8 py-3 rounded-full border text-lg font-medium bg-white">
-              Home/Office
-            </button>
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-8"
+          >
 
-            <button className="px-8 py-3 rounded-full bg-gray-100 text-lg font-medium">
-              APO/FPO
-            </button>
-          </div>
-
-          {/* Form */}
-          <form className="space-y-8">
-
-
+            {/* ADDRESS */}
             <div>
               <div className="relative">
+
                 <Search
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
                   size={22}
@@ -77,47 +168,159 @@ export default function Buy() {
 
                 <input
                   type="text"
-                  placeholder="Start typing address"
-                  className="w-full border rounded-xl pl-14 pr-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
+                  placeholder="Address*"
+                  value={form.address}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      address: e.target.value,
+                    })
+                  }
+                  className="w-full border rounded-xl pl-14 pr-5 py-5 text-xl"
                 />
-              </div>
 
-              <button
-                type="button"
-                className="mt-4 underline text-gray-700 text-lg"
-              >
-                Enter address manually
-              </button>
+              </div>
             </div>
 
+            {/* PHONE */}
             <input
               type="text"
               placeholder="Phone Number*"
-              className="w-full md:w-1/2 border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
+              value={form.phone}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  phone: e.target.value,
+                })
+              }
+              className="w-full md:w-1/2 border rounded-xl px-5 py-5 text-xl"
             />
 
-            <div className="pt-10">
-              <button className="bg-gray-200 text-gray-600 px-12 py-5 rounded-full text-xl font-semibold hover:bg-gray-300 transition">
-                Save & Continue
-              </button>
+            {/* PAYMENT */}
+            <div>
+
+              <h3 className="text-2xl font-semibold mb-4">
+                Payment Method
+              </h3>
+
+              <div className="flex gap-4 mb-6">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPaymentMethod("cod")
+                  }
+                  className={`px-5 py-3 rounded-xl border ${
+                    paymentMethod === "cod"
+                      ? "bg-black text-white"
+                      : ""
+                  }`}
+                >
+                  Cash On Delivery
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPaymentMethod("card")
+                  }
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl border ${
+                    paymentMethod === "card"
+                      ? "bg-black text-white"
+                      : ""
+                  }`}
+                >
+                  <CreditCard size={18} />
+                  Credit Card
+                </button>
+
+              </div>
+
+              {paymentMethod === "card" && (
+                <div className="bg-gray-50 border rounded-xl p-5 space-y-4">
+
+                  <input
+                    type="text"
+                    placeholder="Card Number"
+                    maxLength={16}
+                    value={cardInfo.cardNumber}
+                    onChange={(e) =>
+                      setCardInfo({
+                        ...cardInfo,
+                        cardNumber: e.target.value,
+                      })
+                    }
+                    className="w-full border rounded-lg p-3"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Card Holder Name"
+                    value={cardInfo.cardHolder}
+                    onChange={(e) =>
+                      setCardInfo({
+                        ...cardInfo,
+                        cardHolder: e.target.value,
+                      })
+                    }
+                    className="w-full border rounded-lg p-3"
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+
+                    <input
+                      type="text"
+                      placeholder="MM/YY"
+                      value={cardInfo.expiry}
+                      onChange={(e) =>
+                        setCardInfo({
+                          ...cardInfo,
+                          expiry: e.target.value,
+                        })
+                      }
+                      className="border rounded-lg p-3"
+                    />
+
+                    <input
+                      type="password"
+                      placeholder="CVV"
+                      maxLength={4}
+                      value={cardInfo.cvv}
+                      onChange={(e) =>
+                        setCardInfo({
+                          ...cardInfo,
+                          cvv: e.target.value,
+                        })
+                      }
+                      className="border rounded-lg p-3"
+                    />
+
+                  </div>
+
+                </div>
+              )}
+
             </div>
+
+            <button
+              type="submit"
+              className="bg-black text-white px-12 py-5 rounded-full text-xl font-semibold hover:bg-gray-800 transition"
+            >
+              Place Order
+            </button>
+
           </form>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT */}
         <div className="bg-white p-8 rounded-2xl shadow-sm h-fit">
 
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-semibold">
-              In Your Bag
+              Order Summary
             </h2>
-
-            <button className="underline text-xl">
-              Edit
-            </button>
           </div>
 
-          {/* Summary */}
           <div className="space-y-4 text-xl">
 
             <div className="flex justify-between">
@@ -135,7 +338,6 @@ export default function Buy() {
                 <span>Estimated Tax</span>
                 <HelpCircle size={18} />
               </div>
-
               <span>$0.00</span>
             </div>
 
@@ -143,13 +345,10 @@ export default function Buy() {
               <span>Total</span>
               <span>${total.toFixed(2)}</span>
             </div>
+
           </div>
 
-          {/* PRODUCT (DYNAMIC) */}
           <div className="border-t mt-10 pt-8">
-            <h3 className="text-2xl font-semibold mb-6">
-              Arrives by Fri, May 29
-            </h3>
 
             <div className="flex gap-5">
 
@@ -160,6 +359,7 @@ export default function Buy() {
               />
 
               <div>
+
                 <h4 className="text-2xl font-semibold">
                   ${product.price}
                 </h4>
@@ -168,23 +368,20 @@ export default function Buy() {
                   {product.name}
                 </p>
 
-                <p className="text-gray-600 text-lg">
+                <p className="text-gray-600">
                   {product.category}
                 </p>
 
-                {product.size && (
-                  <p className="text-gray-600 text-lg">
-                    Size: {product.size}
-                  </p>
-                )}
-
-                <p className="mt-3 text-lg text-gray-700">
+                <p className="mt-2">
                   Qty: {product.quantity || 1}
                 </p>
+
               </div>
 
             </div>
+
           </div>
+
         </div>
 
       </div>
