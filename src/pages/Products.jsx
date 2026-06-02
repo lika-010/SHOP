@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import products from "../data/products";
 import ProductCard from "../components/ProductCard";
@@ -8,63 +8,66 @@ export default function Products() {
   const { category } = useParams();
   const location = useLocation();
 
-  // 🔍 GET SEARCH FROM URL
-  const searchParams = new URLSearchParams(location.search);
-  const searchQuery = searchParams.get("search")?.toLowerCase() || "";
-
-  // 📂 CATEGORY STATE
-  const [selectedCategory, setSelectedCategory] = useState(
-    category
-      ? category.charAt(0).toUpperCase() + category.slice(1)
-      : "All"
-  );
+  // 🔍 SEARCH PARAM
+  const searchQuery =
+    new URLSearchParams(location.search).get("search")?.toLowerCase() || "";
 
   const categories = ["All", "Women", "Men"];
 
-  // 🔥 SMART NORMALIZER (fix shirt, tshirt, shoes)
+  // 📂 STATE
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // ✅ Sync category with URL
+  useEffect(() => {
+    if (category) {
+      const formatted =
+        category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+
+      setSelectedCategory(formatted);
+    } else {
+      setSelectedCategory("All");
+    }
+  }, [category]);
+
+  // 🔥 NORMALIZER
   const normalize = (text = "") =>
     text
       .toLowerCase()
       .replace(/tshirt/g, "shirt")
+      .replace(/t-shirt/g, "shirt")
       .replace(/tee shirt/g, "shirt")
       .replace(/sneakers/g, "shoes");
 
-  // 🔥 FILTER (CATEGORY + SEARCH)
+  // 🔥 FILTER
   const filteredProducts = useMemo(() => {
+    const keyword = normalize(searchQuery);
+
     return products.filter((item) => {
       const matchesCategory =
         selectedCategory === "All" ||
-        item.category === selectedCategory;
-
-      const keyword = normalize(searchQuery);
+        item.category.toLowerCase() === selectedCategory.toLowerCase();
 
       const matchesSearch =
         keyword === "" ||
         normalize(item.name).includes(keyword) ||
         normalize(item.category).includes(keyword) ||
         normalize(item.type).includes(keyword) ||
-        (item.tag && item.tag.toLowerCase().includes(keyword));
+        (item.tag?.toLowerCase().includes(keyword));
 
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, products]);
 
   return (
     <div className="bg-gray-50 min-h-screen">
-
       {/* BANNER */}
       <section className="relative">
-        <img
-          src={bannerImg}
-          alt="Banner"
-          className="w-full object-contain"
-        />
+        <img src={bannerImg} alt="Banner" className="w-full object-contain" />
 
         <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white text-center">
           <h1 className="text-4xl md:text-6xl font-bold">
             Star By KA Collection
           </h1>
-
           <p className="mt-4 text-lg md:text-xl">
             Discover Our Latest Fashion Collections
           </p>
@@ -76,12 +79,11 @@ export default function Products() {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-3 rounded-full font-semibold transition
-                ${
-                  selectedCategory === cat
-                    ? "bg-white text-black shadow-lg"
-                    : "bg-black/40 text-white backdrop-blur hover:bg-black/60"
-                }`}
+              className={`px-6 py-3 rounded-full font-semibold transition ${
+                selectedCategory === cat
+                  ? "bg-white text-black shadow-lg"
+                  : "bg-black/40 text-white backdrop-blur hover:bg-black/60"
+              }`}
             >
               {cat}
             </button>
@@ -91,8 +93,6 @@ export default function Products() {
 
       {/* PRODUCTS */}
       <div className="max-w-7xl mx-auto py-16 px-6">
-
-        {/* TITLE */}
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold">
             {selectedCategory === "All"
@@ -109,7 +109,6 @@ export default function Products() {
 
         {/* GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
@@ -121,7 +120,6 @@ export default function Products() {
               </h3>
             </div>
           )}
-
         </div>
       </div>
     </div>

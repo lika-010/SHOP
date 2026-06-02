@@ -1,138 +1,190 @@
 import {
-Package,
-User,
-Settings,
-ShoppingCart,
-LayoutDashboard,
+  Package,
+  User,
+  Settings,
+  ShoppingCart,
+  LayoutDashboard,
 } from "lucide-react";
+
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 
 export default function AdminDashboard() {
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const user =
-JSON.parse(localStorage.getItem("user")) || {};
+  const [user, setUser] = useState({});
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
 
-const products =
-JSON.parse(localStorage.getItem("products")) || [];
+  // 🔄 load all data + auto sync
+  useEffect(() => {
+    const loadData = () => {
+      setUser(JSON.parse(localStorage.getItem("user") || "null") || {});
+      setProducts(JSON.parse(localStorage.getItem("products") || "[]"));
+      setOrders(JSON.parse(localStorage.getItem("orders") || "[]"));
+      setUsers(JSON.parse(localStorage.getItem("users") || "[]"));
+    };
 
-return ( <div className="flex min-h-screen bg-gray-100">
-{/* SIDEBAR */} <aside className="w-64 bg-blue-600 text-white"> <div className="p-8 text-2xl font-bold">
-Admin Panel </div>
+    loadData();
 
-```
-    <div className="mt-10 space-y-2">
-      <button className="w-full flex items-center gap-4 px-8 py-4 bg-blue-500">
-        <LayoutDashboard size={20} />
-        Dashboard
-      </button>
+    // sync when localStorage changes
+    window.addEventListener("storage", loadData);
 
-      <button className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500">
-        <User size={20} />
-        User Info
-      </button>
+    return () => {
+      window.removeEventListener("storage", loadData);
+    };
+  }, []);
 
-      <button
-        onClick={() => navigate("/admin/product")}
-        className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500"
-      >
-        <Package size={20} />
-        Product
-      </button>
+  // 💰 total revenue (safe)
+  const totalRevenue = useMemo(() => {
+    return orders.reduce((sum, order) => {
+      return sum + Number(order.total || 0);
+    }, 0);
+  }, [orders]);
 
-      <button className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500">
-        <ShoppingCart size={20} />
-        Order
-      </button>
+  return (
+    <div className="flex min-h-screen bg-gray-100">
 
-      <button className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500">
-        <Settings size={20} />
-        Setting
-      </button>
-    </div>
-  </aside>
-
-  {/* MAIN */}
-  <main className="flex-1">
-    <div className="h-20 bg-white flex items-center justify-between px-10 border-b">
-      <h1 className="text-2xl font-bold text-gray-700">
-        Dashboard
-      </h1>
-
-      <div className="flex items-center gap-3">
-        <div className="text-right">
-          <p className="font-semibold">
-            {user?.name || "Admin"}
-          </p>
-          <p className="text-sm text-gray-500">
-            Administrator
-          </p>
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-blue-600 text-white">
+        <div className="p-8 text-2xl font-bold">
+          Admin Panel
         </div>
 
-        <img
-          src={`https://ui-avatars.com/api/?name=${
-            user?.name || "Admin"
-          }`}
-          alt="Profile"
-          className="w-10 h-10 rounded-full"
-        />
-      </div>
-    </div>
+        <div className="mt-10 space-y-2">
 
-    <div className="p-10">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8">
-        Welcome Back 👋
-      </h2>
+          <button className="w-full flex items-center gap-4 px-8 py-4 bg-blue-500">
+            <LayoutDashboard size={20} />
+            Dashboard
+          </button>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-3xl shadow">
-          <h3 className="text-gray-500 mb-2">
-            Total Products
-          </h3>
-          <p className="text-4xl font-bold text-blue-600">
-            {products.length}
-          </p>
-        </div>
+          <button className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500">
+            <User size={20} />
+            User Info
+          </button>
 
-        <div className="bg-white p-6 rounded-3xl shadow">
-          <h3 className="text-gray-500 mb-2">
-            Total Orders
-          </h3>
-          <p className="text-4xl font-bold text-green-600">
-            0
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl shadow">
-          <h3 className="text-gray-500 mb-2">
-            Total Users
-          </h3>
-          <p className="text-4xl font-bold text-violet-600">
-            1
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-10 bg-white rounded-3xl p-8 shadow">
-        <h3 className="text-xl font-bold mb-4">
-          Quick Actions
-        </h3>
-
-        <div className="flex gap-4">
           <button
             onClick={() => navigate("/admin/product")}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl"
+            className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500"
           >
-            Manage Products
+            <Package size={20} />
+            Product
           </button>
 
-          <button className="bg-green-600 text-white px-6 py-3 rounded-xl">
-            View Orders
+          <button
+            onClick={() => navigate("/admin/orders")}
+            className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500"
+          >
+            <ShoppingCart size={20} />
+            Order
           </button>
+
+          <button className="w-full flex items-center gap-4 px-8 py-4 hover:bg-blue-500">
+            <Settings size={20} />
+            Setting
+          </button>
+
         </div>
-      </div>
+      </aside>
+
+      {/* MAIN */}
+      <main className="flex-1">
+
+        {/* HEADER */}
+        <div className="h-20 bg-white flex items-center justify-between px-10 border-b">
+
+          <h1 className="text-2xl font-bold text-gray-700">
+            Dashboard
+          </h1>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="font-semibold">
+                {user?.role === "admin" ? "Admin" : user?.name || "User"}
+              </p>
+              <p className="text-sm text-gray-500">
+                {user?.role || "User"}
+              </p>
+            </div>
+
+            <img
+              src={`https://ui-avatars.com/api/?name=${user?.name || "Admin"}`}
+              className="w-10 h-10 rounded-full"
+              alt="avatar"
+            />
+          </div>
+        </div>
+
+        {/* CONTENT */}
+        <div className="p-10">
+
+          <h2 className="text-3xl font-bold text-gray-800 mb-8">
+            Welcome Back 👋
+          </h2>
+
+          {/* STATS */}
+          <div className="grid md:grid-cols-4 gap-6">
+
+            <div className="bg-white p-6 rounded-3xl shadow">
+              <h3 className="text-gray-500 mb-2">Total Products</h3>
+              <p className="text-4xl font-bold text-blue-600">
+                {products.length}
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl shadow">
+              <h3 className="text-gray-500 mb-2">Total Orders</h3>
+              <p className="text-4xl font-bold text-green-600">
+                {orders.length}
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl shadow">
+              <h3 className="text-gray-500 mb-2">Revenue</h3>
+              <p className="text-4xl font-bold text-purple-600">
+                ${totalRevenue.toFixed(2)}
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl shadow">
+              <h3 className="text-gray-500 mb-2">Users</h3>
+              <p className="text-4xl font-bold text-orange-600">
+                {users.length}
+              </p>
+            </div>
+
+          </div>
+
+          {/* QUICK ACTIONS */}
+          <div className="mt-10 bg-white rounded-3xl p-8 shadow">
+
+            <h3 className="text-xl font-bold mb-4">
+              Quick Actions
+            </h3>
+
+            <div className="flex gap-4">
+
+              <button
+                onClick={() => navigate("/admin/product")}
+                className="bg-blue-600 text-white px-6 py-3 rounded-xl"
+              >
+                Manage Products
+              </button>
+
+              <button
+                onClick={() => navigate("/admin/orders")}
+                className="bg-green-600 text-white px-6 py-3 rounded-xl"
+              >
+                View Orders
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      </main>
     </div>
-  </main>
-</div>
-);
+  );
 }

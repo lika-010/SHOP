@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ProductCard from "../components/ProductCard";
 import products from "../data/products";
 import { Link } from "react-router-dom";
@@ -12,12 +12,14 @@ export default function Home() {
       subtitle: "Trending styles for everyone",
     },
     {
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d",
+      image:
+        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d",
       title: "New Arrivals",
       subtitle: "Fresh looks just dropped",
     },
     {
-      image: "https://images.unsplash.com/photo-1445205170230-053b83016050",
+      image:
+        "https://images.unsplash.com/photo-1445205170230-053b83016050",
       title: "Summer Sale",
       subtitle: "Up to 50% off selected items",
     },
@@ -25,25 +27,46 @@ export default function Home() {
 
   const [index, setIndex] = useState(0);
 
+  // 🔄 safer slider
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % slides.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [slides.length]);
 
-  // Filter products by tag
-  const discountProducts = products.filter(
-    (product) => product.tag === "discount"
+  // 🔥 SAFE FILTERS (memoized)
+  const discountProducts = useMemo(
+    () => products.filter((p) => p.tag === "discount"),
+    []
   );
 
-  const bestProducts = products.filter(
-    (product) => product.tag === "best"
+  const bestProducts = useMemo(
+    () => products.filter((p) => p.tag === "best"),
+    []
   );
 
-  const newProducts = products.filter(
-    (product) => product.tag === "new"
+  const newProducts = useMemo(
+    () => products.filter((p) => p.tag === "new"),
+    []
+  );
+
+  // 🔁 reusable section
+  const ProductSection = ({ title, items }) => (
+    <section className="max-w-7xl mx-auto px-6 py-12">
+      <h3 className="text-3xl font-bold text-center mb-10">{title}</h3>
+
+      {items.length === 0 ? (
+        <p className="text-center text-gray-500">No products found</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {items.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 
   return (
@@ -52,7 +75,6 @@ export default function Home() {
       <section className="relative h-[500px] overflow-hidden">
         <img
           src={slides[index].image}
-          alt="slide"
           className="w-full h-full object-cover transition-all duration-700"
         />
 
@@ -60,10 +82,7 @@ export default function Home() {
           <h1 className="text-5xl md:text-6xl font-bold">
             {slides[index].title}
           </h1>
-
-          <p className="mt-4 text-lg">
-            {slides[index].subtitle}
-          </p>
+          <p className="mt-4 text-lg">{slides[index].subtitle}</p>
         </div>
 
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
@@ -79,77 +98,29 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SHOP NOW */}
+      {/* SHOP CTA */}
       <section className="max-w-6xl mx-auto py-20 px-6 flex flex-col md:flex-row items-center justify-between gap-10">
         <div className="text-center md:text-left">
-          <h2 className="text-3xl md:text-5xl font-light tracking-tight leading-snug">
+          <h2 className="text-3xl md:text-5xl font-light">
             Start Shopping Now
           </h2>
-
-          <p className="mt-4 text-gray-500 text-sm md:text-base max-w-md">
-            Discover trending products, latest fashion styles, and exclusive
-            deals curated just for you.
+          <p className="mt-4 text-gray-500 max-w-md">
+            Discover trending products and exclusive deals.
           </p>
         </div>
 
         <Link
           to="/products"
-          className="group inline-flex items-center gap-3 px-8 py-4 rounded-full border border-black/10 bg-black text-white hover:bg-white hover:text-black transition-all duration-300"
+          className="px-8 py-4 rounded-full bg-black text-white hover:bg-white hover:text-black border transition"
         >
-          Shop Now
-          <span className="group-hover:translate-x-1 transition-transform duration-300">
-            →
-          </span>
+          Shop Now →
         </Link>
       </section>
 
-      {/* DISCOUNT COLLECTION */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <h3 className="text-3xl font-bold text-center mb-10">
-          Discount Collection
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {discountProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* BEST SELLER COLLECTION */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <h3 className="text-3xl font-bold text-center mb-10">
-          Best Seller Collection
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {bestProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* NEW ARRIVALS */}
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <h3 className="text-3xl font-bold text-center mb-10">
-          New Arrivals Collection
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {newProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-            />
-          ))}
-        </div>
-      </section>
+      {/* SECTIONS */}
+      <ProductSection title="Discount Collection" items={discountProducts} />
+      <ProductSection title="Best Seller Collection" items={bestProducts} />
+      <ProductSection title="New Arrivals Collection" items={newProducts} />
     </div>
   );
 }

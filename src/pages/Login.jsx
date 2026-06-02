@@ -7,27 +7,39 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // SIMPLE DEMO LOGIC (replace with backend later)
+  const handleLogin = (e) => {
+    e.preventDefault();
+
+    if (!email || !password) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    const users = JSON.parse(localStorage.getItem("users")) || [];
 
     let userData = null;
 
-    // 👉 admin login (example)
+    // admin account
     if (email === "admin@gmail.com" && password === "1234") {
       userData = {
-        id: 1,
+        id: "admin",
         name: "Admin",
+        email,
         role: "admin",
       };
-    }
+    } else {
+      userData = users.find(
+        (u) =>
+          u.email.toLowerCase() === email.toLowerCase() &&
+          u.password === password
+      );
 
-    // 👉 normal user login
-    else if (email === "user@gmail.com" && password === "1234") {
-      userData = {
-        id: 2,
-        name: "User",
-        role: "user",
-      };
+      if (userData) {
+        userData = {
+          ...userData,
+          role: userData.role || "customer",
+        };
+      }
     }
 
     if (!userData) {
@@ -35,10 +47,10 @@ export default function Login() {
       return;
     }
 
-    // save user
+    // save session
     localStorage.setItem("user", JSON.stringify(userData));
 
-    // redirect based on role
+    // redirect
     if (userData.role === "admin") {
       navigate("/admin");
     } else {
@@ -50,27 +62,29 @@ export default function Login() {
     <div className="max-w-md mx-auto py-20">
       <h1 className="text-4xl font-bold mb-8">Login</h1>
 
-      <input
-        placeholder="Email"
-        className="w-full border p-3 rounded mb-4"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <form onSubmit={handleLogin}>
+        <input
+          placeholder="Email"
+          className="w-full border p-3 rounded mb-4"
+          value={email}
+          onChange={(e) => setEmail(e.target.value.toLowerCase())}
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        className="w-full border p-3 rounded mb-4"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full border p-3 rounded mb-4"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button
-        onClick={handleLogin}
-        className="w-full bg-violet-600 text-white py-3 rounded-xl"
-      >
-        Login
-      </button>
+        <button
+          type="submit"
+          className="w-full bg-violet-600 text-white py-3 rounded-xl"
+        >
+          Login
+        </button>
+      </form>
     </div>
   );
 }

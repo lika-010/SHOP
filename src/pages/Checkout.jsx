@@ -1,5 +1,3 @@
-// src/pages/Checkout.jsx
-
 import { useEffect, useState } from "react";
 import {
   Truck,
@@ -11,22 +9,67 @@ import {
 export default function Checkout() {
   const [cartItems, setCartItems] = useState([]);
 
-  useEffect(() => {
-    const cart =
-      JSON.parse(localStorage.getItem("cart")) || [];
+  // 🧠 form state (IMPORTANT)
+  const [form, setForm] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    address: "",
+    phone: "",
+  });
 
+  // 🔄 load cart
+  const loadCart = () => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
     setCartItems(cart);
+  };
+
+  useEffect(() => {
+    loadCart();
   }, []);
 
   const subtotal = cartItems.reduce(
-    (total, item) =>
-      total + item.price * item.quantity,
+    (total, item) => total + item.price * item.quantity,
     0
   );
 
   const shipping = cartItems.length > 0 ? 5 : 0;
   const tax = 0;
   const total = subtotal + shipping + tax;
+
+  // 🧾 submit order
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (cartItems.length === 0) {
+      alert("Cart is empty");
+      return;
+    }
+
+    if (!form.email || !form.firstName || !form.address) {
+      alert("Please fill required fields");
+      return;
+    }
+
+    const order = {
+      id: Date.now(),
+      customer: form,
+      items: cartItems,
+      total,
+      date: new Date().toISOString(),
+    };
+
+    const orders = JSON.parse(localStorage.getItem("orders")) || [];
+    orders.push(order);
+
+    localStorage.setItem("orders", JSON.stringify(orders));
+
+    // clear cart
+    localStorage.removeItem("cart");
+    setCartItems([]);
+
+    alert("Order placed successfully!");
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] py-10 px-5">
@@ -36,123 +79,96 @@ export default function Checkout() {
 
       <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-10">
 
-        {/* LEFT SIDE */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm">
+        {/* LEFT */}
+        <div className="lg:col-span-2 bg-white p-8 rounded-2xl">
 
-          {/* Delivery */}
           <h2 className="text-3xl font-semibold mb-8">
             Delivery Options
           </h2>
 
-          <div className="grid grid-cols-2 gap-5 mb-8">
-
-            <button className="border-2 border-black rounded-xl py-6 flex items-center justify-center gap-3 text-xl font-medium hover:bg-gray-100 transition">
-              <Truck size={28} />
-              Ship
-            </button>
-
-            <button className="border rounded-xl py-6 flex items-center justify-center gap-3 text-xl font-medium hover:bg-gray-100 transition">
-              <MapPin size={28} />
-              Pick Up
-            </button>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-3 mb-10">
-            <button className="px-8 py-3 rounded-full border text-lg font-medium bg-white">
-              Home/Office
-            </button>
-
-            <button className="px-8 py-3 rounded-full bg-gray-100 text-lg font-medium">
-              APO/FPO
-            </button>
-          </div>
-
-          {/* Form */}
-          <form className="space-y-8">
+          {/* FORM */}
+          <form onSubmit={handleSubmit} className="space-y-8">
 
             <input
               type="email"
               placeholder="Email*"
-              className="w-full border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
+              value={form.email}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+              className="w-full border rounded-xl px-5 py-5 text-xl"
             />
 
             <div className="grid md:grid-cols-2 gap-5">
               <input
                 type="text"
                 placeholder="First Name*"
-                className="border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
+                value={form.firstName}
+                onChange={(e) =>
+                  setForm({ ...form, firstName: e.target.value })
+                }
+                className="border rounded-xl px-5 py-5 text-xl"
               />
 
               <input
                 type="text"
-                placeholder="Last Name*"
-                className="border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
+                placeholder="Last Name"
+                value={form.lastName}
+                onChange={(e) =>
+                  setForm({ ...form, lastName: e.target.value })
+                }
+                className="border rounded-xl px-5 py-5 text-xl"
               />
             </div>
 
-            <div>
-              <div className="relative">
-                <Search
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-                  size={22}
-                />
+            <div className="relative">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
+                size={22}
+              />
 
-                <input
-                  type="text"
-                  placeholder="Start typing address"
-                  className="w-full border rounded-xl pl-14 pr-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
-                />
-              </div>
-
-              <button
-                type="button"
-                className="mt-4 underline text-gray-700 text-lg"
-              >
-                Enter address manually
-              </button>
+              <input
+                type="text"
+                placeholder="Address*"
+                value={form.address}
+                onChange={(e) =>
+                  setForm({ ...form, address: e.target.value })
+                }
+                className="w-full border rounded-xl pl-14 py-5 text-xl"
+              />
             </div>
 
             <input
               type="text"
-              placeholder="Phone Number*"
-              className="w-full md:w-1/2 border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
+              placeholder="Phone Number"
+              value={form.phone}
+              onChange={(e) =>
+                setForm({ ...form, phone: e.target.value })
+              }
+              className="w-full md:w-1/2 border rounded-xl px-5 py-5 text-xl"
             />
 
-            <div className="pt-10">
-              <button
-                type="submit"
-                className="bg-gray-200 text-gray-600 px-12 py-5 rounded-full text-xl font-semibold hover:bg-gray-300 transition"
-              >
-                Save & Continue
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="bg-black text-white px-12 py-5 rounded-full text-xl font-semibold"
+            >
+              Place Order
+            </button>
           </form>
         </div>
 
-        {/* RIGHT SIDE */}
-        <div className="bg-white p-8 rounded-2xl shadow-sm h-fit">
+        {/* RIGHT */}
+        <div className="bg-white p-8 rounded-2xl h-fit">
 
+          <h2 className="text-3xl font-semibold mb-8">
+            In Your Bag ({cartItems.length})
+          </h2>
 
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-semibold">
-              In Your Bag
-            </h2>
-
-            <span className="text-gray-500">
-              {cartItems.length} items
-            </span>
-          </div>
-
-          {/* Summary */}
+          {/* SUMMARY */}
           <div className="space-y-4 text-xl">
 
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span>Subtotal</span>
-                <HelpCircle size={18} />
-              </div>
-
+            <div className="flex justify-between">
+              <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
 
@@ -161,61 +177,42 @@ export default function Checkout() {
               <span>${shipping.toFixed(2)}</span>
             </div>
 
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span>Estimated Tax</span>
-                <HelpCircle size={18} />
-              </div>
-
-              <span>${tax.toFixed(2)}</span>
-            </div>
-
             <div className="border-t pt-5 flex justify-between text-2xl font-semibold">
               <span>Total</span>
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
 
-          {/* Products */}
+          {/* ITEMS */}
           <div className="border-t mt-10 pt-8 space-y-6">
-            {cartItems.length > 0 ? (
-              cartItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex gap-5"
-                >
+            {cartItems.length === 0 ? (
+              <p className="text-center text-gray-500">
+                Your cart is empty
+              </p>
+            ) : (
+              cartItems.map((item) => (
+                <div key={item.id} className="flex gap-5">
                   <img
                     src={item.image}
-                    alt={item.name}
-                    className="w-32 h-32 object-cover rounded-lg"
+                    className="w-28 h-28 object-cover rounded-lg"
                   />
 
                   <div>
-                    <h4 className="text-2xl font-semibold">
-                      $
-                      {(
-                        item.price * item.quantity
-                      ).toFixed(2)}
+                    <h4 className="text-xl font-semibold">
+                      ${item.price * item.quantity}
                     </h4>
 
-                    <p className="text-xl font-medium">
-                      {item.name}
-                    </p>
-
-                    <p className="mt-3 text-lg text-gray-700">
+                    <p>{item.name}</p>
+                    <p className="text-gray-600">
                       Qty: {item.quantity}
                     </p>
                   </div>
                 </div>
               ))
-            ) : (
-              <p className="text-center text-gray-500">
-                Your cart is empty
-              </p>
             )}
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   );

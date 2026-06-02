@@ -7,60 +7,65 @@ export default function ProductAdmin() {
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const [form, setForm] = useState({
+  const initialForm = {
     name: "",
     price: "",
     stock: "",
     image: "",
-  });
+  };
 
-  useEffect(() => {
-    const data =
-      JSON.parse(localStorage.getItem("products")) || [];
-    setProducts(data);
-  }, []);
+  const [form, setForm] = useState(initialForm);
 
-  const saveProducts = (data) => {
-    localStorage.setItem(
-      "products",
-      JSON.stringify(data)
-    );
+  // 🔄 Load products
+  const loadProducts = () => {
+    const data = JSON.parse(localStorage.getItem("products")) || [];
     setProducts(data);
   };
 
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const saveProducts = (data) => {
+    localStorage.setItem("products", JSON.stringify(data));
+    setProducts(data);
+  };
+
+  // 🖼 IMAGE
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
-
     reader.onloadend = () => {
       setForm((prev) => ({
         ...prev,
         image: reader.result,
       }));
     };
-
     reader.readAsDataURL(file);
   };
 
+  // ➕ ADD
   const addProduct = () => {
-    if (!form.name || !form.price) return;
+    if (!form.name.trim() || !form.price) {
+      alert("Name and price required");
+      return;
+    }
 
     const newProduct = {
       id: Date.now(),
       name: form.name,
       price: Number(form.price),
-      stock: Number(form.stock),
-      image:
-        form.image ||
-        "https://via.placeholder.com/150",
+      stock: Number(form.stock || 0),
+      image: form.image || "https://via.placeholder.com/150",
     };
 
     saveProducts([...products, newProduct]);
     resetForm();
   };
 
+  // ✏️ UPDATE
   const updateProduct = () => {
     const updated = products.map((p) =>
       p.id === editingId
@@ -68,7 +73,7 @@ export default function ProductAdmin() {
             ...p,
             name: form.name,
             price: Number(form.price),
-            stock: Number(form.stock),
+            stock: Number(form.stock || 0),
             image: form.image || p.image,
           }
         : p
@@ -78,10 +83,13 @@ export default function ProductAdmin() {
     resetForm();
   };
 
+  // 🗑 DELETE
   const deleteProduct = (id) => {
-    saveProducts(products.filter((p) => p.id !== id));
+    const filtered = products.filter((p) => p.id !== id);
+    saveProducts(filtered);
   };
 
+  // ✏️ EDIT
   const startEdit = (product) => {
     setEditingId(product.id);
     setForm({
@@ -93,16 +101,11 @@ export default function ProductAdmin() {
     setShowForm(true);
   };
 
+  // 🔄 RESET
   const resetForm = () => {
     setEditingId(null);
     setShowForm(false);
-
-    setForm({
-      name: "",
-      price: "",
-      stock: "",
-      image: "",
-    });
+    setForm(initialForm);
   };
 
   return (
@@ -110,13 +113,17 @@ export default function ProductAdmin() {
       <AdminSidebar />
 
       <main className="flex-1 p-10">
+
+        {/* HEADER */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">
-            Product Management
-          </h1>
+          <h1 className="text-3xl font-bold">Product Management</h1>
 
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setShowForm(true);
+              setForm(initialForm);
+              setEditingId(null);
+            }}
             className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2"
           >
             <Plus size={18} />
@@ -124,15 +131,14 @@ export default function ProductAdmin() {
           </button>
         </div>
 
-        {/* FORM MODAL */}
+        {/* MODAL */}
         {showForm && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-3xl w-full max-w-lg">
+
               <div className="flex justify-between mb-6">
                 <h2 className="text-xl font-bold">
-                  {editingId
-                    ? "Edit Product"
-                    : "Add Product"}
+                  {editingId ? "Edit Product" : "Add Product"}
                 </h2>
 
                 <button onClick={resetForm}>
@@ -141,15 +147,13 @@ export default function ProductAdmin() {
               </div>
 
               <div className="space-y-4">
+
                 <input
                   type="text"
                   placeholder="Product Name"
                   value={form.name}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      name: e.target.value,
-                    })
+                    setForm({ ...form, name: e.target.value })
                   }
                   className="w-full border p-3 rounded-xl"
                 />
@@ -159,10 +163,7 @@ export default function ProductAdmin() {
                   placeholder="Price"
                   value={form.price}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      price: e.target.value,
-                    })
+                    setForm({ ...form, price: e.target.value })
                   }
                   className="w-full border p-3 rounded-xl"
                 />
@@ -172,10 +173,7 @@ export default function ProductAdmin() {
                   placeholder="Stock"
                   value={form.stock}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      stock: e.target.value,
-                    })
+                    setForm({ ...form, stock: e.target.value })
                   }
                   className="w-full border p-3 rounded-xl"
                 />
@@ -190,27 +188,20 @@ export default function ProductAdmin() {
                 {form.image && (
                   <img
                     src={form.image}
-                    alt="Preview"
+                    alt="preview"
                     className="w-32 h-32 rounded-xl object-cover"
                   />
                 )}
 
                 <button
-                  onClick={
-                    editingId
-                      ? updateProduct
-                      : addProduct
-                  }
+                  onClick={editingId ? updateProduct : addProduct}
                   className={`w-full py-3 rounded-xl text-white ${
-                    editingId
-                      ? "bg-blue-600"
-                      : "bg-green-600"
+                    editingId ? "bg-blue-600" : "bg-green-600"
                   }`}
                 >
-                  {editingId
-                    ? "Update Product"
-                    : "Add Product"}
+                  {editingId ? "Update Product" : "Add Product"}
                 </button>
+
               </div>
             </div>
           </div>
@@ -218,7 +209,8 @@ export default function ProductAdmin() {
 
         {/* TABLE */}
         <div className="bg-white rounded-3xl shadow overflow-hidden">
-          <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-gray-50 font-semibold text-gray-600">
+
+          <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-gray-50 font-semibold">
             <div>ID</div>
             <div>Image</div>
             <div>Name</div>
@@ -237,15 +229,12 @@ export default function ProductAdmin() {
               <div>
                 <img
                   src={product.image}
-                  alt={product.name}
                   className="w-16 h-16 object-cover rounded-xl"
                 />
               </div>
 
               <div>{product.name}</div>
-
               <div>${product.price}</div>
-
               <div>{product.stock}</div>
 
               <div className="flex gap-2">
@@ -257,9 +246,7 @@ export default function ProductAdmin() {
                 </button>
 
                 <button
-                  onClick={() =>
-                    deleteProduct(product.id)
-                  }
+                  onClick={() => deleteProduct(product.id)}
                   className="bg-red-500 text-white p-2 rounded-lg"
                 >
                   <Trash2 size={18} />
@@ -273,6 +260,7 @@ export default function ProductAdmin() {
               No products found
             </div>
           )}
+
         </div>
       </main>
     </div>
