@@ -2,17 +2,24 @@ import { useEffect, useState } from "react";
 import { Plus, Edit, Trash2, X } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
 
+import defaultProducts from "../../data/products";
+
 export default function ProductAdmin() {
   const [products, setProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const initialForm = {
-    name: "",
-    price: "",
-    stock: "",
-    image: "",
-  };
+    const initialForm = {
+  name: "",
+  category: "",
+  type: "",
+  tag: "",
+  price: "",
+  salePrice: "",
+  stock: "",
+  image: "",
+  featured: false,
+};
 
   const [form, setForm] = useState(initialForm);
 
@@ -27,8 +34,14 @@ export default function ProductAdmin() {
 
   // LOAD
   const loadProducts = () => {
-    const data = safeParse("products", []);
-    setProducts(data);
+  const localProducts = safeParse("products", []);
+
+  const mergedProducts = [
+    ...defaultProducts,
+    ...localProducts,
+  ];
+
+  setProducts(mergedProducts);
   };
 
   useEffect(() => {
@@ -37,9 +50,9 @@ export default function ProductAdmin() {
 
   // SAVE
   const saveProducts = (data) => {
-    localStorage.setItem("products", JSON.stringify(data));
-    setProducts(data);
-  };
+  localStorage.setItem("products", JSON.stringify(data));
+  loadProducts();
+};
 
   // IMAGE UPLOAD
   const handleImageChange = (e) => {
@@ -57,59 +70,72 @@ export default function ProductAdmin() {
   };
 
   // ADD
-  const addProduct = () => {
-    if (!form.name.trim() || !form.price) {
-      alert("Name and price required");
-      return;
-    }
-
     const newProduct = {
-      id: Date.now(),
-      name: form.name,
-      price: Number(form.price),
-      stock: Number(form.stock || 0),
-      image: form.image || "https://via.placeholder.com/150",
-    };
-
-    saveProducts([...products, newProduct]);
-    resetForm();
-  };
+  id: Date.now(),
+  name: form.name,
+  category: form.category,
+  type: form.type,
+  tag: form.tag || null,
+  price: Number(form.price),
+  salePrice: form.salePrice
+    ? Number(form.salePrice)
+    : null,
+  stock: Number(form.stock || 0),
+  image: form.image || "https://via.placeholder.com/150",
+  images: [form.image || "https://via.placeholder.com/150"],
+  featured: form.featured,
+};
 
   // UPDATE
   const updateProduct = () => {
-    const updated = products.map((p) =>
-      p.id === editingId
-        ? {
-            ...p,
-            name: form.name,
-            price: Number(form.price),
-            stock: Number(form.stock || 0),
-            image: form.image || p.image,
-          }
-        : p
-    );
+  const localProducts = safeParse("products", []);
 
-    saveProducts(updated);
-    resetForm();
-  };
+  const updated = localProducts.map((p) =>
+    p.id === editingId
+      ? {
+          ...p,
+          name: form.name,
+          price: Number(form.price),
+          stock: Number(form.stock || 0),
+          image: form.image || p.image,
+        }
+      : p
+  );
+
+  saveProducts(updated);
+
+  resetForm();
+};
 
   // DELETE
   const deleteProduct = (id) => {
-    const filtered = products.filter((p) => p.id !== id);
-    saveProducts(filtered);
-  };
+  const localProducts = safeParse("products", []);
+
+  const filtered = localProducts.filter(
+    (p) => p.id !== id
+  );
+
+  saveProducts(filtered);
+};
 
   // EDIT
   const startEdit = (product) => {
-    setEditingId(product.id);
-    setForm({
-      name: product.name || "",
-      price: product.price || "",
-      stock: product.stock || "",
-      image: product.image || "",
-    });
-    setShowForm(true);
-  };
+  setEditingId(product.id);
+
+  setForm({
+    name: product.name || "",
+    category: product.category || "",
+    type: product.type || "",
+    tag: product.tag || "",
+    price: product.price || "",
+    salePrice: product.salePrice || "",
+    stock: product.stock || "",
+    image: product.image || "",
+    featured: product.featured || false,
+  });
+
+  setShowForm(true);
+};
 
   // RESET
   const resetForm = () => {
@@ -223,12 +249,15 @@ export default function ProductAdmin() {
         <div className="bg-white rounded-3xl shadow overflow-hidden">
 
           {/* HEADER */}
-          <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-gray-50 font-semibold">
+          <div className="grid grid-cols-9 gap-4 px-6 py-4 bg-gray-50 font-semibold">
             <div>ID</div>
             <div>Image</div>
             <div>Name</div>
+            <div>Category</div>
+            <div>Type</div>
+            <div>Tag</div>
             <div>Price</div>
-            <div>Stock</div>
+            <div>Featured</div>
             <div>Action</div>
           </div>
 
