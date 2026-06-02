@@ -1,5 +1,6 @@
 <?php
-require_once "../config/database.php";
+// require database using an absolute path relative to this file
+require_once __DIR__ . '/../../../config/database.php';
 
 class AuthController {
 

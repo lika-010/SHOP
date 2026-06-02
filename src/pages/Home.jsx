@@ -27,38 +27,45 @@ export default function Home() {
 
   const [index, setIndex] = useState(0);
 
-  // 🔄 safer slider
+  // SAFE SLIDER
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % slides.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [slides.length]);
+  }, []);
 
-  // 🔥 SAFE FILTERS (memoized)
+  // SAFE CURRENT SLIDE
+  const currentSlide = slides[index] || slides[0];
+
+  // FILTER PRODUCTS (SAFE)
   const discountProducts = useMemo(
-    () => products.filter((p) => p.tag === "discount"),
+    () => products?.filter((p) => p?.tag === "discount") || [],
     []
   );
 
   const bestProducts = useMemo(
-    () => products.filter((p) => p.tag === "best"),
+    () => products?.filter((p) => p?.tag === "best") || [],
     []
   );
 
   const newProducts = useMemo(
-    () => products.filter((p) => p.tag === "new"),
+    () => products?.filter((p) => p?.tag === "new") || [],
     []
   );
 
-  // 🔁 reusable section
+  // REUSABLE SECTION
   const ProductSection = ({ title, items }) => (
     <section className="max-w-7xl mx-auto px-6 py-12">
-      <h3 className="text-3xl font-bold text-center mb-10">{title}</h3>
+      <h3 className="text-3xl font-bold text-center mb-10">
+        {title}
+      </h3>
 
       {items.length === 0 ? (
-        <p className="text-center text-gray-500">No products found</p>
+        <p className="text-center text-gray-500">
+          No products found
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {items.map((product) => (
@@ -71,35 +78,43 @@ export default function Home() {
 
   return (
     <div>
+
       {/* HERO SLIDER */}
       <section className="relative h-[500px] overflow-hidden">
+
         <img
-          src={slides[index].image}
-          className="w-full h-full object-cover transition-all duration-700"
+          src={currentSlide.image}
+          alt="slide"
+          className="w-full h-full object-cover transition-opacity duration-700"
         />
 
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-center">
           <h1 className="text-5xl md:text-6xl font-bold">
-            {slides[index].title}
+            {currentSlide.title}
           </h1>
-          <p className="mt-4 text-lg">{slides[index].subtitle}</p>
+          <p className="mt-4 text-lg">
+            {currentSlide.subtitle}
+          </p>
         </div>
 
+        {/* DOT NAVIGATION */}
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
           {slides.map((_, i) => (
-            <div
+            <button
               key={i}
               onClick={() => setIndex(i)}
-              className={`w-3 h-3 rounded-full cursor-pointer ${
+              className={`w-3 h-3 rounded-full transition ${
                 i === index ? "bg-white" : "bg-white/50"
               }`}
             />
           ))}
         </div>
+
       </section>
 
-      {/* SHOP CTA */}
+      {/* CTA SECTION */}
       <section className="max-w-6xl mx-auto py-20 px-6 flex flex-col md:flex-row items-center justify-between gap-10">
+
         <div className="text-center md:text-left">
           <h2 className="text-3xl md:text-5xl font-light">
             Start Shopping Now
@@ -115,12 +130,25 @@ export default function Home() {
         >
           Shop Now →
         </Link>
+
       </section>
 
-      {/* SECTIONS */}
-      <ProductSection title="Discount Collection" items={discountProducts} />
-      <ProductSection title="Best Seller Collection" items={bestProducts} />
-      <ProductSection title="New Arrivals Collection" items={newProducts} />
+      {/* PRODUCT SECTIONS */}
+      <ProductSection
+        title="Discount Collection"
+        items={discountProducts}
+      />
+
+      <ProductSection
+        title="Best Seller Collection"
+        items={bestProducts}
+      />
+
+      <ProductSection
+        title="New Arrivals Collection"
+        items={newProducts}
+      />
+
     </div>
   );
 }
