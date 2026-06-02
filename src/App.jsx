@@ -14,7 +14,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Favorite from "./pages/Favorite";
 import Buy from "./pages/buy";
 import About from "./pages/About";
-
+import ProductAdmin from "./pages/ProductAdmin";
 export default function App() {
 return (
 <BrowserRouter>
@@ -22,6 +22,9 @@ return (
 <Navbar/>
 
 <Routes>
+<Route path="/admin" element={<AdminDashboard />} />
+<Route path="/admin/product" element={<ProductAdmin />} />
+
 <Route path="/" element={<Home/>}/>
 <Route path="/products" element={<Products/>}/>
 <Route path="/product/:id" element={<ProductDetail/>}/>
@@ -35,6 +38,8 @@ return (
 <Route path="/favorite" element={<Favorite />} />
 <Route path="/buy" element={<Buy />} />
 <Route path="/About" element={<About />} />
+<Route path="/admin/product" element={<ProductAdmin />} />
+
 
 </Routes>
 

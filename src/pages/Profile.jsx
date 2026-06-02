@@ -1,5 +1,3 @@
-// src/pages/Profile.jsx
-
 import {
   User,
   Mail,
@@ -11,10 +9,38 @@ import {
   Pencil,
 } from "lucide-react";
 
-export default function Profile() {
+import { useState, useEffect } from "react";
 
-  // Get user from localStorage
-  const user = JSON.parse(localStorage.getItem("user"));
+export default function Profile() {
+  const [user, setUser] = useState(null);
+
+  // Load user
+  useEffect(() => {
+    const savedUser = JSON.parse(localStorage.getItem("user"));
+    setUser(savedUser);
+  }, []);
+
+  // Upload image
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const updatedUser = {
+        ...user,
+        image: reader.result,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  if (!user) return <div className="p-10">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-5">
@@ -27,7 +53,7 @@ export default function Profile() {
           {/* COVER */}
           <div className="relative h-72 bg-gradient-to-r from-violet-600 via-purple-500 to-pink-500">
 
-            {/* Edit Button */}
+            {/* EDIT BUTTON */}
             <button className="absolute top-5 right-5 bg-white/20 backdrop-blur-md hover:bg-white/30 transition p-3 rounded-full text-white">
               <Pencil size={20} />
             </button>
@@ -37,7 +63,7 @@ export default function Profile() {
           {/* CONTENT */}
           <div className="px-8 pb-10">
 
-            {/* TOP SECTION */}
+            {/* TOP */}
             <div className="-mt-24 flex flex-col lg:flex-row lg:items-end justify-between gap-8">
 
               {/* LEFT */}
@@ -48,7 +74,7 @@ export default function Profile() {
 
                   <div className="w-44 h-44 rounded-full overflow-hidden border-[6px] border-white shadow-2xl bg-white">
 
-                    {user?.image ? (
+                    {user.image ? (
                       <img
                         src={user.image}
                         alt="profile"
@@ -61,108 +87,80 @@ export default function Profile() {
                     )}
                   </div>
 
-                  {/* Camera Button */}
-                  <button className="absolute bottom-3 right-3 bg-violet-600 hover:bg-violet-700 text-white p-3 rounded-full shadow-lg transition">
+                  {/* CAMERA UPLOAD */}
+                  <label className="absolute bottom-3 right-3 bg-violet-600 hover:bg-violet-700 text-white p-3 rounded-full shadow-lg transition cursor-pointer">
                     <Camera size={18} />
-                  </button>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+
                 </div>
 
                 {/* USER INFO */}
                 <div className="pb-4">
 
                   <h1 className="text-4xl font-bold text-gray-800">
-                    {user?.name || "No Name"}
+                    {user.name || "No Name"}
                   </h1>
 
                   <p className="text-violet-600 font-semibold text-lg mt-2">
-                    {user?.role || "Customer"}
+                    {user.role || "Customer"}
                   </p>
 
                   <p className="text-gray-500 mt-2 max-w-xl">
-                    Welcome to your profile dashboard. Manage your
-                    account information, personal details, and settings.
+                    Welcome to your profile dashboard. Manage your account information.
                   </p>
 
                 </div>
               </div>
 
-              {/* RIGHT STATS */}
+              {/* STATS */}
               <div className="grid grid-cols-2 gap-4">
 
                 <div className="bg-violet-50 rounded-2xl px-6 py-5 text-center">
-                  <h2 className="text-2xl font-bold text-violet-700">
-                    24
-                  </h2>
-
-                  <p className="text-gray-600 text-sm mt-1">
-                    Orders
-                  </p>
+                  <h2 className="text-2xl font-bold text-violet-700">24</h2>
+                  <p className="text-gray-600 text-sm mt-1">Orders</p>
                 </div>
 
                 <div className="bg-pink-50 rounded-2xl px-6 py-5 text-center">
-                  <h2 className="text-2xl font-bold text-pink-600">
-                    12
-                  </h2>
-
-                  <p className="text-gray-600 text-sm mt-1">
-                    Wishlist
-                  </p>
+                  <h2 className="text-2xl font-bold text-pink-600">12</h2>
+                  <p className="text-gray-600 text-sm mt-1">Wishlist</p>
                 </div>
+
               </div>
             </div>
 
             {/* INFO GRID */}
             <div className="grid lg:grid-cols-2 gap-6 mt-12">
 
-              {/* EMAIL */}
-              <InfoCard
-                icon={<Mail className="text-violet-600" size={26} />}
-                title="Email Address"
-                value={user?.email || "No Email"}
-              />
+              <InfoCard icon={<Mail />} title="Email" value={user.email || "No Email"} />
+              <InfoCard icon={<Phone />} title="Phone" value={user.phone || "No Phone"} />
+              <InfoCard icon={<MapPin />} title="Address" value={user.address || "No Address"} />
+              <InfoCard icon={<Calendar />} title="Join Date" value={user.joinDate || "2026"} />
 
-              {/* PHONE */}
-              <InfoCard
-                icon={<Phone className="text-violet-600" size={26} />}
-                title="Phone Number"
-                value={user?.phone || "No Phone"}
-              />
-
-              {/* ADDRESS */}
-              <InfoCard
-                icon={<MapPin className="text-violet-600" size={26} />}
-                title="Address"
-                value={user?.address || "No Address"}
-              />
-
-              {/* DATE */}
-              <InfoCard
-                icon={<Calendar className="text-violet-600" size={26} />}
-                title="Join Date"
-                value={user?.joinDate || "2026"}
-              />
             </div>
 
             {/* VERIFIED */}
             <div className="mt-10 bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-100 rounded-3xl p-6 flex items-center gap-5 shadow-sm">
 
               <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center">
-                <ShieldCheck
-                  className="text-violet-600"
-                  size={34}
-                />
+                <ShieldCheck className="text-violet-600" size={34} />
               </div>
 
               <div>
                 <h3 className="font-bold text-2xl text-violet-700">
                   Verified Account
                 </h3>
-
                 <p className="text-gray-600 mt-1">
-                  Your account is verified and fully secured.
-                  Enjoy shopping with confidence.
+                  Your account is verified and secure.
                 </p>
               </div>
+
             </div>
 
           </div>
@@ -177,19 +175,15 @@ function InfoCard({ icon, title, value }) {
   return (
     <div className="bg-gray-50 hover:bg-white border border-gray-100 rounded-3xl p-6 flex items-start gap-5 shadow-sm hover:shadow-lg transition-all duration-300">
 
-      <div className="w-14 h-14 rounded-2xl bg-violet-100 flex items-center justify-center">
+      <div className="w-14 h-14 rounded-2xl bg-violet-100 flex items-center justify-center text-violet-600">
         {icon}
       </div>
 
       <div>
-        <p className="text-sm text-gray-500">
-          {title}
-        </p>
-
-        <p className="font-semibold text-gray-800 text-lg mt-1">
-          {value}
-        </p>
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="font-semibold text-gray-800 text-lg mt-1">{value}</p>
       </div>
+
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Users, Award, Truck, ShieldCheck } from "lucide-react";
-
+import { Link } from "react-router-dom";
 export default function About() {
   const features = [
     {
@@ -211,9 +211,12 @@ export default function About() {
             Explore our latest collections and discover styles that define you.
           </p>
 
-          <button className="bg-white text-pink-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition">
+          <Link
+            to="/products"
+            className="bg-white text-pink-600 px-8 py-4 rounded-full font-semibold hover:bg-gray-100 transition inline-block"
+            >
             Shop Now
-          </button>
+            </Link>
         </div>
       </section>
     </div>

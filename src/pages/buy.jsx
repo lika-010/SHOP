@@ -67,25 +67,6 @@ export default function Buy() {
           {/* Form */}
           <form className="space-y-8">
 
-            <input
-              type="email"
-              placeholder="Email*"
-              className="w-full border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
-            />
-
-            <div className="grid md:grid-cols-2 gap-5">
-              <input
-                type="text"
-                placeholder="First Name*"
-                className="border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
-              />
-
-              <input
-                type="text"
-                placeholder="Last Name*"
-                className="border rounded-xl px-5 py-5 text-xl outline-none focus:ring-2 focus:ring-black"
-              />
-            </div>
 
             <div>
               <div className="relative">

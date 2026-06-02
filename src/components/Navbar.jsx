@@ -2,18 +2,14 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   ShoppingCart,
-  User,
   Menu,
-  KeyRound,
   Settings,
+  User,
   Pencil,
-  RefreshCw,
-  UserPlus,
-  Users,
   LogOut,
 } from "lucide-react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -23,15 +19,12 @@ export default function Navbar() {
   const [search, setSearch] = useState("");
 
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   // Load user + cart
   useEffect(() => {
-    try {
-      const savedUser = JSON.parse(localStorage.getItem("user"));
-      if (savedUser) setUser(savedUser);
-    } catch (error) {
-      console.error("Invalid user data");
-    }
+    const savedUser = JSON.parse(localStorage.getItem("user"));
+    if (savedUser) setUser(savedUser);
 
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
     setCartCount(cart.length);
@@ -51,14 +44,27 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
+  // CLOSE DROPDOWN OUTSIDE CLICK
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Logout
   const handleLogout = () => {
     localStorage.removeItem("user");
     setUser(null);
+    setProfileOpen(false);
     navigate("/login");
   };
 
-  // Search function
+  // Search
   const handleSearch = (e) => {
     if (e.key === "Enter" && search.trim()) {
       navigate(`/products?search=${encodeURIComponent(search.trim())}`);
@@ -95,7 +101,6 @@ export default function Navbar() {
           {/* SEARCH */}
           <div className="hidden md:flex items-center bg-gray-100 px-4 py-2 rounded-full w-72">
             <Search size={18} className="text-gray-500" />
-
             <input
               type="text"
               placeholder="find"
@@ -132,20 +137,83 @@ export default function Navbar() {
               </Link>
             </div>
           ) : (
-            <>
-              <span className="hidden md:block font-medium">
-                {user.name}
-              </span>
+            <div className="relative" ref={dropdownRef}>
 
+              {/* PROFILE BUTTON */}
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="w-10 h-10 rounded-full bg-gray-400 text-white flex items-center justify-center"
+                className="flex items-center gap-2"
               >
-                {user.name?.charAt(0)}
+                <span className="hidden md:block font-medium">
+                  {user.name}
+                </span>
+
+                {/* AVATAR */}
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center text-white">
+                  {user.image ? (
+                    <img
+                      src={user.image}
+                      alt="profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{user.name?.charAt(0)}</span>
+                  )}
+                </div>
               </button>
-            </>
+
+              {/* DROPDOWN */}
+              {profileOpen && (
+                <div className="absolute right-0 mt-3 w-52 bg-white shadow-lg border rounded-xl overflow-hidden z-50">
+
+                  {/* ADMIN */}
+                  {user.role === "admin" && (
+                    <button
+                      onClick={() => {
+                        navigate("/admin");
+                        setProfileOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-2"
+                    >
+                      <Settings size={16} />
+                      Admin Dashboard
+                    </button>
+                  )}
+
+                  {/* PROFILE */}
+                  <button
+                    onClick={() => {
+                      navigate("/profile");
+                      setProfileOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-2"
+                  >
+                    <User size={16} />
+                    Profile
+                  </button>
+
+                  {/* EDIT */}
+                  <button className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-2">
+                    <Pencil size={16} />
+                    Edit Profile
+                  </button>
+
+                  <hr />
+
+                  {/* LOGOUT */}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-3 hover:bg-red-100 text-red-500 flex items-center gap-2"
+                  >
+                    <LogOut size={16} />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
+          {/* MOBILE MENU */}
           <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden">
             <Menu />
           </button>

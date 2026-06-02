@@ -72,7 +72,7 @@ const products = [
     type: "shirt",
     tag: "new",
     price: 35,
-    salePrice: 29,
+    salePrice: null,
     image: woman1,
     images: [
       woman1,
@@ -106,7 +106,7 @@ const products = [
     type: "Hoodie",
     tag: "discount",
     price: 40,
-    salePrice: 34,
+    salePrice: 35,
     image: woman1_1,
     images: [
       woman1_1,
@@ -140,7 +140,7 @@ const products = [
     type: "Hoodie",
     tag: "new",
     price: 28,
-    salePrice: 24,
+    salePrice: null,
     image: man2_1,
     images: [
       man2_1,
@@ -157,7 +157,7 @@ const products = [
     type: "Pants",
     tag: null,
     price: 60,
-    salePrice: 50,
+    salePrice: null,
     image: man3_1,
     images: [
       man3_1,
@@ -205,7 +205,7 @@ const products = [
     type: "Shirt",
     tag: "new",
     price: 45,
-    salePrice: 39,
+    salePrice: null,
     image: woman5_1,
     images: [
       woman5_1,
@@ -235,7 +235,7 @@ const products = [
     type: "Hoodie",
     tag: "new",
     price: 35,
-    salePrice: 29,
+    salePrice: null,
     image: man5_1,
     images: [
       man5_1,
@@ -252,7 +252,7 @@ const products = [
     type: "Pants",
     tag: "discount",
     price: 45,
-    salePrice: null,
+    salePrice: 20,
     image: man6_1,
     images: [
       man6_1,
@@ -269,7 +269,7 @@ const products = [
     type: "Pants",
     tag: "best",
     price: 20,
-    salePrice: 17,
+    salePrice: null,
     image: woman6_1,
     images: [
       woman6_1,
@@ -286,7 +286,7 @@ const products = [
     type: "Shirt",
     tag: null,
     price: 20,
-    salePrice: 17,
+    salePrice: null,
     image: woman7_1,
     images: [
       woman7_1,
@@ -320,7 +320,7 @@ const products = [
     type: "Dress",
     tag: "discount",
     price: 45,
-    salePrice: null,
+    salePrice: 35,
     image: woman9_1,
     images: [
       woman9_1,
