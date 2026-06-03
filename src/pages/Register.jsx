@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
 
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     setForm({
@@ -20,78 +23,139 @@ export default function Register() {
 
   const handleRegister = (e) => {
     e.preventDefault();
+
     setError("");
+    setSuccess("");
 
-    const { name, email, password } = form;
+    const { name, email, password, confirmPassword } = form;
 
-    // basic validation
-    if (!name || !email || !password) {
-      setError("All fields are required");
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Please fill all fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
 
     const users = JSON.parse(localStorage.getItem("users")) || [];
 
-    const exists = users.find((u) => u.email === email.toLowerCase());
-    if (exists) {
-      setError("Email already exists!");
+    const existingUser = users.find(
+      (user) => user.email.toLowerCase() === email.toLowerCase()
+    );
+
+    if (existingUser) {
+      setError("Email already exists");
       return;
     }
 
     const newUser = {
       id: Date.now(),
-      name,
-      email: email.toLowerCase(),
-      role: "Customer",
-      joinDate: new Date().getFullYear(),
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      role: "user",
+      joinDate: new Date().toISOString(),
     };
 
     users.push(newUser);
+
     localStorage.setItem("users", JSON.stringify(users));
 
-    navigate("/login");
+    setSuccess("Registration successful!");
+
+    setForm({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
+
+    setTimeout(() => {
+      navigate("/login");
+    }, 1000);
   };
 
   return (
-    <div className="max-w-md mx-auto py-20">
-      <h1 className="text-4xl font-bold mb-8">Register</h1>
+    <div className="max-w-md mx-auto py-20 px-4">
+      <div className="bg-white shadow-lg rounded-xl p-8">
+        <h1 className="text-4xl font-bold text-center mb-8">
+          Create Account
+        </h1>
 
-      {error && (
-        <p className="mb-4 text-red-500 font-medium">{error}</p>
-      )}
+        {error && (
+          <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-      <form onSubmit={handleRegister} className="space-y-4">
-        <input
-          name="name"
-          type="text"
-          placeholder="Full Name"
-          className="w-full border p-3 rounded"
-          value={form.name}
-          onChange={handleChange}
-        />
+        {success && (
+          <div className="bg-green-100 text-green-600 p-3 rounded mb-4">
+            {success}
+          </div>
+        )}
 
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          className="w-full border p-3 rounded"
-          value={form.email}
-          onChange={handleChange}
-        />
+        <form onSubmit={handleRegister} className="space-y-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Full Name"
+            className="w-full border p-3 rounded-lg"
+            value={form.name}
+            onChange={handleChange}
+          />
 
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          className="w-full border p-3 rounded"
-          value={form.password}
-          onChange={handleChange}
-        />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            className="w-full border p-3 rounded-lg"
+            value={form.email}
+            onChange={handleChange}
+          />
 
-        <button className="w-full bg-violet-600 text-white py-3 rounded-xl">
-          Register
-        </button>
-      </form>
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            className="w-full border p-3 rounded-lg"
+            value={form.password}
+            onChange={handleChange}
+          />
+
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm Password"
+            className="w-full border p-3 rounded-lg"
+            value={form.confirmPassword}
+            onChange={handleChange}
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3 rounded-lg"
+          >
+            Register
+          </button>
+        </form>
+
+        <p className="text-center mt-5">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-violet-600 font-semibold"
+          >
+            Login
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

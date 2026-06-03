@@ -1,21 +1,46 @@
 import axios from "axios";
 
 const axiosApi = axios.create({
-  baseURL: "http://localhost:5000/api", // change to your backend URL
+  baseURL: "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Attach token automatically
-axiosApi.interceptors.request.use((config) => {
-  const user = JSON.parse(localStorage.getItem("user"));
+/* =======================
+   REQUEST INTERCEPTOR
+======================= */
+axiosApi.interceptors.request.use(
+  (config) => {
+    try {
+      const user = localStorage.getItem("user");
 
-  if (user?.token) {
-    config.headers.Authorization = `Bearer ${user.token}`;
+      if (user) {
+        const parsedUser = JSON.parse(user);
+
+        if (parsedUser?.token) {
+          config.headers.Authorization = `Bearer ${parsedUser.token}`;
+        }
+      }
+
+      return config;
+    } catch (err) {
+      console.log("Token parse error:", err);
+      return config;
+    }
+  },
+  (error) => Promise.reject(error)
+);
+
+/* =======================
+   RESPONSE INTERCEPTOR (optional but useful)
+======================= */
+axiosApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Error:", error.response?.data || error.message);
+    return Promise.reject(error);
   }
-
-  return config;
-});
+);
 
 export default axiosApi;

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Search, Truck, CreditCard } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Checkout() {
+  const navigate = useNavigate();
+
   const [cartItems, setCartItems] = useState([]);
 
   const [form, setForm] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
     address: "",
     phone: "",
   });
@@ -34,24 +34,24 @@ export default function Checkout() {
     setCartItems(cart);
   }, []);
 
-  const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  const subtotal = cartItems.reduce((total, item) => {
+    const price = Number(item.price) || 0;
+    const qty = Number(item.quantity) || 1;
+    return total + price * qty;
+  }, 0);
 
-  const shipping = cartItems.length > 0 ? 5 : 0;
-  const tax = 0;
-  const total = subtotal + shipping + tax;
+  const shipping = cartItems.length ? 5 : 0;
+  const total = subtotal + shipping;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (cartItems.length === 0) {
+    if (!cartItems.length) {
       alert("Cart is empty");
       return;
     }
 
-    if (!form.email || !form.firstName || !form.address) {
+    if (!form.address || !form.phone) {
       alert("Please fill required fields");
       return;
     }
@@ -68,15 +68,29 @@ export default function Checkout() {
       }
     }
 
+    // ✅ SAME STRUCTURE AS BUY PAGE
     const order = {
       id: Date.now(),
-      customer: form,
-      items: cartItems,
+
+      items: cartItems.map((item) => ({
+        ...item,
+        quantity: Number(item.quantity) || 1,
+      })),
+
+      subtotal,
+      shipping,
       total,
+
       status: "pending",
+
+      customer: {
+        address: form.address,
+        phone: form.phone,
+      },
+
       paymentMethod,
-      paymentStatus:
-        paymentMethod === "card" ? "paid" : "pending",
+
+      paymentStatus: paymentMethod === "card" ? "paid" : "pending",
 
       cardInfo:
         paymentMethod === "card"
@@ -91,37 +105,41 @@ export default function Checkout() {
       date: new Date().toISOString(),
     };
 
-    const orders = safeParse("orders", []);
+    try {
+      // 🔥 API (same as Buy page style)
+      const res = await fetch("http://localhost:8000/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(order),
+      });
 
-    localStorage.setItem(
-      "orders",
-      JSON.stringify([...orders, order])
-    );
+      if (!res.ok) throw new Error("API failed");
 
-    localStorage.removeItem("cart");
+      await res.json();
 
-    setCartItems([]);
+      localStorage.removeItem("cart");
+      setCartItems([]);
 
-    setForm({
-      email: "",
-      firstName: "",
-      lastName: "",
-      address: "",
-      phone: "",
-    });
+      alert("Order placed successfully!");
 
-    setCardInfo({
-      cardNumber: "",
-      cardHolder: "",
-      expiry: "",
-      cvv: "",
-    });
+      navigate("/");
+    } catch (err) {
+      console.warn("API failed → saving locally");
 
-    alert(
-      paymentMethod === "card"
-        ? "Payment successful! Order placed."
-        : "Order placed successfully!"
-    );
+      const orders = safeParse("orders", []);
+      localStorage.setItem(
+        "orders",
+        JSON.stringify([...orders, order])
+      );
+
+      localStorage.removeItem("cart");
+      setCartItems([]);
+
+      alert("Saved locally (backend not connected)");
+      navigate("/");
+    }
   };
 
   return (
@@ -134,68 +152,21 @@ export default function Checkout() {
 
         {/* LEFT */}
         <div className="lg:col-span-2 bg-white p-8 rounded-2xl">
+
           <h2 className="text-3xl font-semibold mb-8">
             Delivery Information
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
 
-            <input
-              type="email"
-              placeholder="Email*"
-              value={form.email}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  email: e.target.value,
-                })
-              }
-              className="w-full border rounded-xl px-5 py-4"
-            />
-
-            <div className="grid md:grid-cols-2 gap-5">
-              <input
-                type="text"
-                placeholder="First Name*"
-                value={form.firstName}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    firstName: e.target.value,
-                  })
-                }
-                className="border rounded-xl px-5 py-4"
-              />
-
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={form.lastName}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    lastName: e.target.value,
-                  })
-                }
-                className="border rounded-xl px-5 py-4"
-              />
-            </div>
-
             <div className="relative">
-              <Search
-                size={20}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"
-              />
-
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
               <input
                 type="text"
                 placeholder="Address*"
                 value={form.address}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    address: e.target.value,
-                  })
+                  setForm({ ...form, address: e.target.value })
                 }
                 className="w-full border rounded-xl pl-12 py-4"
               />
@@ -203,13 +174,10 @@ export default function Checkout() {
 
             <input
               type="text"
-              placeholder="Phone Number"
+              placeholder="Phone Number*"
               value={form.phone}
               onChange={(e) =>
-                setForm({
-                  ...form,
-                  phone: e.target.value,
-                })
+                setForm({ ...form, phone: e.target.value })
               }
               className="w-full border rounded-xl px-5 py-4"
             />
@@ -220,15 +188,15 @@ export default function Checkout() {
                 Payment Method
               </h3>
 
-              <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex gap-4 mb-6">
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("cod")}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl border ${
+                  className={`flex items-center gap-2 px-5 py-3 border rounded-xl ${
                     paymentMethod === "cod"
                       ? "bg-black text-white"
-                      : "bg-white"
+                      : ""
                   }`}
                 >
                   <Truck size={18} />
@@ -238,14 +206,14 @@ export default function Checkout() {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("card")}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-xl border ${
+                  className={`flex items-center gap-2 px-5 py-3 border rounded-xl ${
                     paymentMethod === "card"
                       ? "bg-black text-white"
-                      : "bg-white"
+                      : ""
                   }`}
                 >
                   <CreditCard size={18} />
-                  Credit / Debit Card
+                  Card
                 </button>
 
               </div>
@@ -311,14 +279,13 @@ export default function Checkout() {
                     />
 
                   </div>
-
                 </div>
               )}
             </div>
 
             <button
               type="submit"
-              className="bg-black text-white px-10 py-4 rounded-full font-semibold hover:bg-gray-800 transition"
+              className="bg-black text-white px-10 py-4 rounded-full font-semibold"
             >
               Place Order
             </button>
@@ -329,12 +296,11 @@ export default function Checkout() {
         {/* RIGHT */}
         <div className="bg-white p-8 rounded-2xl h-fit">
 
-          <h2 className="text-3xl font-semibold mb-8">
+          <h2 className="text-3xl font-semibold mb-6">
             Order Summary
           </h2>
 
-          <div className="space-y-4">
-
+          <div className="space-y-3">
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
@@ -345,51 +311,38 @@ export default function Checkout() {
               <span>${shipping.toFixed(2)}</span>
             </div>
 
-            <div className="border-t pt-4 flex justify-between text-xl font-bold">
+            <div className="border-t pt-4 flex justify-between font-bold">
               <span>Total</span>
               <span>${total.toFixed(2)}</span>
             </div>
-
           </div>
 
-          <div className="border-t mt-8 pt-6 space-y-4">
-
+          <div className="border-t mt-8 pt-6">
             {cartItems.length === 0 ? (
-              <p className="text-center text-gray-500">
-                Your cart is empty
+              <p className="text-gray-500 text-center">
+                Cart is empty
               </p>
             ) : (
               cartItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4"
-                >
+                <div key={item.id} className="flex gap-4 mb-4">
                   <img
                     src={item.image}
-                    alt={item.name}
-                    className="w-20 h-20 rounded-lg object-cover"
+                    className="w-20 h-20 object-cover rounded-lg"
                   />
-
                   <div>
                     <h4 className="font-semibold">
                       {item.name}
                     </h4>
-
                     <p className="text-gray-500">
                       Qty: {item.quantity}
                     </p>
-
                     <p className="font-bold">
-                      $
-                      {(
-                        item.price * item.quantity
-                      ).toFixed(2)}
+                      ${(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 </div>
               ))
             )}
-
           </div>
 
         </div>

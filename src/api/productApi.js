@@ -1,26 +1,16 @@
-import axiosApi from "./axiosApi";
+// api/productApi.js
 
-// GET ALL PRODUCTS
-export const getProducts = () => {
-  return axiosApi.get("/products");
-};
+import axios from "axios";
 
-// GET SINGLE PRODUCT
-export const getProductById = (id) => {
-  return axiosApi.get(`/products/${id}`);
-};
+const API_URL = "http://localhost:8000/api/products";
 
-// CREATE PRODUCT (ADMIN)
-export const createProduct = (data) => {
-  return axiosApi.post("/products", data);
-};
+export const getProducts = () => axios.get(API_URL);
 
-// UPDATE PRODUCT
-export const updateProduct = (id, data) => {
-  return axiosApi.put(`/products/${id}`, data);
-};
+export const createProduct = (data) =>
+  axios.post(API_URL, data);
 
-// DELETE PRODUCT
-export const deleteProduct = (id) => {
-  return axiosApi.delete(`/products/${id}`);
-};
+export const updateProductApi = (id, data) =>
+  axios.put(`${API_URL}/${id}`, data);
+
+export const deleteProductApi = (id) =>
+  axios.delete(`${API_URL}/${id}`);
