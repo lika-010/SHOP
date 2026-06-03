@@ -8,7 +8,7 @@ import {
   Pencil,
   LogOut,
 } from "lucide-react";
-
+import logo from "../assets/logo.jpg";
 import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
@@ -82,7 +82,7 @@ export default function Navbar() {
         <div className="flex items-center gap-10">
           <Link to="/" className="flex items-center gap-3">
             <img
-              src="../src/assets/logo.jpg"
+              src={logo}
               alt="Logo"
               className="w-20 h-11 object-cover rounded-2xl"
             />
