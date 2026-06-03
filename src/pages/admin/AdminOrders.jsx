@@ -5,9 +5,6 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [openOrderId, setOpenOrderId] = useState(null);
 
-  // GET LOGGED IN USER
-  const user = JSON.parse(localStorage.getItem("user"));
-
   // SAFE PARSE
   const safeParse = (key, fallback) => {
     try {
@@ -36,13 +33,18 @@ export default function AdminOrders() {
     }
   };
 
+  // DELETE ORDER
+  const handleDelete = (id) => {
+    const updated = orders.filter((o) => o.id !== id);
+    setOrders(updated);
+    localStorage.setItem("orders", JSON.stringify(updated));
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
-
       <AdminSidebar />
 
       <div className="flex-1 p-8">
-
         <h1 className="text-3xl font-bold mb-6">
           Orders Management
         </h1>
@@ -76,12 +78,9 @@ export default function AdminOrders() {
                     #{order.id}
                   </span>
 
-                  {/* USER */}
+                  {/* USER (FIXED — BUYER ONLY) */}
                   <span className="font-medium text-gray-700">
-                    {order.userName ||
-                      order.user?.name ||
-                      user?.name ||
-                      "Guest"}
+                    {order.user?.name || order.userName || "Unknown User"}
                   </span>
 
                   {/* TOTAL */}
@@ -91,29 +90,24 @@ export default function AdminOrders() {
 
                   {/* STATUS */}
                   <span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(order.status)}`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(
+                        order.status
+                      )}`}
+                    >
                       {order.status || "unknown"}
                     </span>
                   </span>
 
                   {/* DELETE */}
                   <button
-                    onClick={() => {
-                      const updated = orders.filter(
-                        (o) => o.id !== order.id
-                      );
-                      setOrders(updated);
-                      localStorage.setItem(
-                        "orders",
-                        JSON.stringify(updated)
-                      );
-                    }}
+                    onClick={() => handleDelete(order.id)}
                     className="text-red-600 hover:underline"
                   >
                     Delete
                   </button>
 
-                  {/* DETAILS BUTTON */}
+                  {/* VIEW */}
                   <button
                     onClick={() =>
                       setOpenOrderId(
@@ -126,7 +120,7 @@ export default function AdminOrders() {
                   </button>
                 </div>
 
-                {/* PRODUCT DETAILS */}
+                {/* DETAILS */}
                 {openOrderId === order.id && (
                   <div className="bg-gray-50 p-4">
                     <h3 className="font-semibold mb-3">
@@ -142,6 +136,7 @@ export default function AdminOrders() {
                           >
                             <img
                               src={item.image}
+                              alt={item.name}
                               className="w-14 h-14 object-cover rounded"
                             />
 
@@ -169,10 +164,8 @@ export default function AdminOrders() {
                 )}
               </div>
             ))}
-
           </div>
         )}
-
       </div>
     </div>
   );
